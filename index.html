@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Step Challenge: Race to August 20!</title>
+  <style>
+    /* Dark Theme Dashboard Styling */
+    :root {
+      --bg-color: #0d0d0d;
+      --card-bg: #181818;
+      --track-bg: #262626;
+      --finish-line-color: #00ff88;
+      --text-color: #f0f0f0;
+      --subtext-color: #a0a0a0;
+      --accent-blue: #00ccff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 30px 20px;
+      box-sizing: border-box;
+    }
+
+    /* Header & Countdown */
+    .header-container {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin: 0 0 10px 0;
+      background: linear-gradient(45deg, #ffffff, #a0a0a0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .countdown-banner {
+      font-size: 1.2rem;
+      color: var(--accent-blue);
+      font-weight: 600;
+      background-color: rgba(0, 204, 255, 0.1);
+      padding: 8px 20px;
+      border-radius: 20px;
+      display: inline-block;
+      border: 1px solid rgba(0, 204, 255, 0.3);
+    }
+
+    /* MAIN CONTAINER: Vertical Stack of Race Lanes */
+    #raceContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 35px;
+      width: 100%;
+      max-width: 1100px;
+      background-color: var(--card-bg);
+      padding: 35px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border: 1px solid #2a2a2a;
+    }
+
+    /* Individual Race Lane */
+    .lane {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+    }
+
+    /* Participant Info (Left Side) */
+    .participant-info {
+      width: 150px;
+      min-width: 150px;
+      text-align: right;
+    }
+
+    .name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .step-count {
+      font-size: 0.95rem;
+      color: var(--accent-blue);
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    /* The Race Track */
+    .track {
+      flex-grow: 1;
+      height: 28px;
+      background-color: var(--track-bg);
+      border-radius: 14px;
+      position: relative;
+      overflow: visible;
+      border: 1px solid #333;
+    }
+
+    /* Progress Filler */
+    .progress-fill {
+      height: 100%;
+      border-radius: 14px;
+      width: 0%;
+      transition: width 1.5s ease-out;
+    }
+
+    /* ANIMATED RACER ICON */
+    .racer-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      transform: translate(-50%, -50%);
+      transition: left 1.5s ease-out;
+      z-index: 10;
+    }
+
+    .racer {
+      width: 52px;
+      height: 52px;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+      border: 3px solid #181818;
+      cursor: pointer;
+      /* scaleX(-1) flips the emoji to face right toward finish line */
+      transform: scaleX(-1);
+      animation: runBounce 0.6s infinite alternate ease-in-out;
+    }
+
+    /* Running Bounce Keyframe */
+    @keyframes runBounce {
+      0% {
+        transform: scaleX(-1) translateY(0px) rotate(-4deg);
+      }
+      100% {
+        transform: scaleX(-1) translateY(-8px) rotate(4deg);
+      }
+    }
+
+    /* Hover Effect */
+    .racer-wrapper:hover .racer {
+      animation-play-state: paused;
+      transform: scaleX(-1) scale(1.25);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+    }
+
+    /* FINISH LINE FLAG */
+    .finish-flag {
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2.2rem;
+      z-index: 5;
+      animation: flagWiggle 2s infinite ease-in-out;
+    }
+
+    @keyframes flagWiggle {
+      0%, 100% { transform: translateY(-50%) rotate(0deg); }
+      50% { transform: translateY(-50%) rotate(8deg); }
+    }
+
+    /* Responsive Mobile Fix */
+    @media (max-width: 768px) {
+      .lane { flex-direction: column; align-items: stretch; }
+      .participant-info { text-align: left; width: 100%; }
+      .finish-flag { right: -10px; font-size: 1.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-container">
+    <h1>Race to August 20th!</h1>
+    <div id="countdown" class="countdown-banner">Calculating time remaining...</div>
+  </div>
+
+  <div id="raceContainer">
+    <div style="text-align: center; color: #888;">Fetching current ArcGIS step standings...</div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. CONFIGURATION SETTINGS
+    // ==========================================
+
+    const REST_SERVICE_URL = "https://services8.arcgis.com/4VKWRr0YjpFsBipl/arcgis/rest/services/survey123_366c5e32b4004961b4eb3a348c90dd2e_results/FeatureServer/0";
+    const TARGET_DATE = new Date("August 20, 2026 23:59:59").getTime();
+
+    // Racers, Icons (Female/Male Runners), and Colors
+    const RACER_DATA = {
+      "Bryanna": { icon: '🏃‍♀️', color: '#ff4d4d' }, // Female Runner
+      "Randy": { icon: '🏃‍♂️', color: '#00ccff' },   // Male Runner
+      "Rolando": { icon: '🏃‍♂️', color: '#ffcc00' }, // Male Runner
+      "Veronica": { icon: '🏃‍♀️', color: '#cc33ff' } // Female Runner
+    };
+
+    // ==========================================
+    // 2. COUNTDOWN TIMER FUNCTION
+    // ==========================================
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = TARGET_DATE - now;
+
+      if (distance > 0) {
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        document.getElementById("countdown").innerText = `⏳ ${days} days, ${hours} hours remaining until August 20th!`;
+      } else {
+        document.getElementById("countdown").innerText = "🏁 The Step Challenge Has Reached the Finish Line!";
+      }
+    }
+
+    // ==========================================
+    // 3. FETCH ARCGIS STANDINGS & RENDER (UNCAPPED)
+    // ==========================================
+    async function fetchStepStandings() {
+      const queryParams = new URLSearchParams({
+        where: "1=1",
+        outStatistics: JSON.stringify([{
+          statisticType: "sum",
+          onStatisticField: "Number_of_Steps",
+          outStatisticFieldName: "Total_Steps"
+        }]),
+        groupByFieldsForStatistics: "Name",
+        f: "json"
+      });
+
+      try {
+        const response = await fetch(`${REST_SERVICE_URL}/query?${queryParams}`);
+        const data = await response.json();
+
+        const raceContainer = document.getElementById("raceContainer");
+        raceContainer.innerHTML = "";
+
+        if (!data.features || data.features.length === 0) {
+          raceContainer.innerHTML = "<div style='color: #ff5555; text-align: center;'>No step data returned. Make sure layer sharing is Public.</div>";
+          return;
+        }
+
+        // --- UNCAPPED DYNAMIC SCALE LOGIC ---
+        // Find the current highest step total among all participants
+        let highestSteps = 0;
+        data.features.forEach(f => {
+          const steps = f.attributes.Total_Steps || 0;
+          if (steps > highestSteps) highestSteps = steps;
+        });
+
+        // Set dynamic scale goal: Uses current leader's total (or minimum 10,000 steps baseline)
+        const DYNAMIC_GOAL = Math.max(10000, highestSteps);
+
+        // Render each runner relative to the dynamic leader goal
+        data.features.forEach((feature) => {
+          const name = feature.attributes.Name;
+          const totalSteps = feature.attributes.Total_Steps || 0;
+
+          if (RACER_DATA[name]) {
+            const racerInfo = RACER_DATA[name];
+
+            // Calculate track percentage relative to current leader (No cap!)
+            const percentComplete = (totalSteps / DYNAMIC_GOAL) * 100;
+
+            const laneDiv = document.createElement('div');
+            laneDiv.className = 'lane';
+
+            laneDiv.innerHTML = `
+              <div class="participant-info">
+                <div class="name">${name}</div>
+                <div class="step-count">${totalSteps.toLocaleString()} steps</div>
+              </div>
+              <div class="track">
+                <div class="progress-fill" style="width: ${percentComplete}%; background-color: ${racerInfo.color}40;"></div>
+                <div class="racer-wrapper" style="left: ${percentComplete}%;">
+                  <div class="racer" style="background-color: ${racerInfo.color};" title="${name}: ${totalSteps.toLocaleString()} steps">
+                    ${racerInfo.icon}
+                  </div>
+                </div>
+                <div class="finish-flag">🏁</div>
+              </div>
+            `;
+
+            raceContainer.appendChild(laneDiv);
+          }
+        });
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        document.getElementById("raceContainer").innerHTML = `<div style='color: #ff5555; text-align: center;'>Error connecting to ArcGIS: ${error.message}</div>`;
+      }
+    }
+
+    // Initialize timers and data fetch
+    updateCountdown();
+    fetchStepStandings();
+
+    // Auto-refresh timer every hour & standings every 5 minutes
+    setInterval(updateCountdown, 3600000);
+    setInterval(fetchStepStandings, 300000);
+  </script>
+</body>
+</html>
